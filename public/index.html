@@ -1,0 +1,30 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><title>Glow Unisex Salon</title>
+<link rel="stylesheet" href="style.css"></head><body>
+<header><h1>✨ Glow Unisex Salon</h1><p>Beauty & grooming for everyone</p></header>
+<main>
+  <div class="card"><h2>Our Services</h2><div id="services">Loading...</div></div>
+  <div class="card"><h2>Book an Appointment</h2>
+    <input id="name" placeholder="Your name">
+    <input id="phone" placeholder="Phone number" type="tel">
+    <select id="service"></select>
+    <input id="date" type="date"><input id="time" type="time">
+    <button onclick="book()">Book Now</button><div id="msg"></div>
+  </div>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+$('date').min = new Date().toISOString().split('T')[0];
+fetch('/api/services').then(r => r.json()).then(list => {
+  $('services').innerHTML = list.map(s =>
+    `<div class="svc"><span>${s.name} <span class="tag">${s.category}</span></span><b>₹${s.price}</b></div>`).join('');
+  $('service').innerHTML = list.map(s => `<option value="${s._id}">${s.name} - ₹${s.price}</option>`).join('');
+});
+async function book() {
+  const body = { name: $('name').value, phone: $('phone').value, service: $('service').value, date: $('date').value, time: $('time').value };
+  const r = await fetch('/api/bookings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  const d = await r.json();
+  $('msg').style.color = r.ok ? 'green' : 'crimson';
+  $('msg').textContent = r.ok ? '✅ ' + d.message : '❌ ' + d.error;
+}
+</script></body></html>

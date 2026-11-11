@@ -1,0 +1,32 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><title>Admin</title>
+<link rel="stylesheet" href="style.css"></head><body>
+<header><h1>Admin Panel</h1></header>
+<main>
+  <div class="card"><input id="key" type="password" placeholder="Admin key"><button onclick="load()">Login / Refresh</button></div>
+  <div class="card"><h3>Add Service</h3>
+    <input id="sn" placeholder="Name"><select id="sc"><option>unisex</option><option>men</option><option>women</option></select>
+    <input id="sp" type="number" placeholder="Price"><input id="sm" type="number" placeholder="Minutes">
+    <button onclick="addSvc()">Add</button></div>
+  <div id="list"></div>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+const H = () => ({ 'Content-Type': 'application/json', 'x-admin-key': $('key').value });
+async function load() {
+  const r = await fetch('/api/bookings', { headers: H() });
+  if (!r.ok) return $('list').innerHTML = '<div class="card">Wrong key</div>';
+  const list = await r.json();
+  $('list').innerHTML = list.map(b => `<div class="card">
+    <b>${b.name}</b> (${b.phone})<br>${b.service ? b.service.name : 'Deleted service'} • ${b.date} ${b.time}<br>
+    Status: <b>${b.status}</b><br>
+    <button class="sm" onclick="setStatus('${b._id}','confirmed')">Confirm</button>
+    <button class="sm" onclick="setStatus('${b._id}','cancelled')">Cancel</button>
+    <button class="sm" onclick="del('${b._id}')">Delete</button></div>`).join('') || '<div class="card">No bookings yet</div>';
+}
+const setStatus = (id, status) => fetch('/api/bookings/' + id, { method: 'PATCH', headers: H(), body: JSON.stringify({ status }) }).then(load);
+const del = id => fetch('/api/bookings/' + id, { method: 'DELETE', headers: H() }).then(load);
+const addSvc = () => fetch('/api/services', { method: 'POST', headers: H(),
+  body: JSON.stringify({ name: $('sn').value, category: $('sc').value, price: +$('sp').value, minutes: +$('sm').value }) })
+  .then(() => alert('Service added'));
+</script></body></html>
